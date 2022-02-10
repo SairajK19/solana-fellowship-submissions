@@ -39,5 +39,5 @@ spl-token burn ${TOKEN_ACCOUNT_ADDRESS} ${NUMBER_OF_TOKENS_TO_BURN}
 ```
 ![This is an image](./images/burning_tokens.png)
 
-[Link to token on devnet](https://explorer.solana.com/address/72WVA8b7Jc53ra1zLKPHw44MrSgf4pSA597ZPiUAUCXb?cluster=devnet)
+[Link to token on devnet](https://explorer.solana.com/address/72WVA8b7Jc53ra1zLKPHw44MrSgf4pSA597ZPiUAUCXb?cluster=devnet)<br>
 [Quest Link](https://openquest.xyz/quest/create_crypto_with_solana_cli)
