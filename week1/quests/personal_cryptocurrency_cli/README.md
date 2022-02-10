@@ -22,7 +22,7 @@ spl-token create-account # creates an account to hold your new token balance
 ![This is an image](./images/creating_acc_to_hold_balance.png)
 
 ## Minting tokens
-```
+```console
 spl-token mint ${TOKEN_ADDRESS} ${NUMBER_OF_TOKENS} # mints tokens
 ```
 ![This is an image](./images/minting_tokens.png)
@@ -34,7 +34,7 @@ spl-token authorize ${TOKEN_ADDRESS} mint --disable
 ![This is an image](./images/disable_minting.png)
 
 ## Burning tokens
-```
+```console
 spl-token burn ${TOKEN_ACCOUNT_ADDRESS} ${NUMBER_OF_TOKENS_TO_BURN}
 ```
 ![This is an image](./images/burning_tokens.png)
