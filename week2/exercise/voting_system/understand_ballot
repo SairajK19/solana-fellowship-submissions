@@ -1,0 +1,70 @@
+### Ballot
+
+B -> Ballot
+V -> Voter
+D -> Deligate
+C -> Candidate
+P -> Proposal
+
+V will have the right to
+  vote
+  deligate a vote
+
+D will have the right to
+  vote
+
+C winner announcement
+
+V {
+  weight // vote count initial -> 1
+  voted // true | false initial -> true
+  delegate // delegate's pub key, if any
+  vote // pubkey of the vote proposal account
+}
+
+P {
+  name, // name of C
+  voteCount // Number of votes received initial -> 0
+}
+
+B {
+  proposals, // array of proposal structs *optional
+  total_proposals,
+  winner,
+}
+
+#### Functions
+
+## Part 1
+initialize_ballot()
+vote()
+declare_winner()
+
+## Part 2
++++
+give_right_to_vote()
+delegate_vote()
+
+initialize_ballot()
+-> 3 candidates (will be sent through js, since i believe we cant create accounts inside a program!!)
+   create proposals
+   set winner to none, if required.
+
+vote()
+-> increment P.voteCount
+   set V.weight = 0
+   set V.voted = true
+   set V.vote to P (pubkey)
+
+declare_winner() // self explanatory...
+
+give_right_to_vote()
+-> set V.weight = 1
+   signer should be initializer
+
+delegate_vote()
+-> set from.voted = true
+   set from.delegate = to
+   if delegate voted set P.votecount + from.weight
+   else delegate.weight += from.weight
+   set from.weight = 0

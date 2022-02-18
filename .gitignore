@@ -2,3 +2,4 @@ node_modules
 test-ledger
 week2/quests/roulette-game/user.json
 target
+*.bak
