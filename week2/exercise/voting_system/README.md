@@ -1,15 +1,11 @@
-### Environment Setup
-1. Install Rust from https://rustup.rs/
-2. Install Solana from https://docs.solana.com/cli/install-solana-cli-tools#use-solanas-install-tool
+# Exercise (Simple voting program on Solana)
 
-### Build and test for program compiled natively
-```
-$ cargo build
-$ cargo test
-```
+## Install dependencies and run test script
 
-### Build and test the program compiled for BPF
+```console
+npm install
+node index.js
 ```
-$ cargo build-bpf
-$ cargo test-bpf
-```
+![This is an image](./images/ballot.png)
+
+Note: Not much error handling done in the client script. script will run only once per deployment.
