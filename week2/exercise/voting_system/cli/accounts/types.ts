@@ -13,6 +13,8 @@ export type VoteAccountData = {
 export type BallotAccountData = {
   winner_address: Uint8Array;
   total_proposals: number;
+  chairperson: Uint8Array;
+  initialized: number;
 };
 
 // pub struct Voter {

@@ -32,10 +32,14 @@ export class VoteAccount {
 export class BallotAccount {
   total_proposals: number;
   winner_address: Uint8Array;
+  chairperson: Uint8Array;
+  initialized: number;
 
   constructor(args: BallotAccountData) {
     this.total_proposals = args.total_proposals;
     this.winner_address = args.winner_address;
+    this.chairperson = args.chairperson;
+    this.initialized = args.initialized;
   }
 }
 
@@ -69,6 +73,8 @@ export const SCHEMA = new Map<any, any>([
       fields: [
         ["total_proposals", "u32"],
         ["winner_address", [32]],
+        ["chairperson", [32]],
+        ["initialized", "u8"]
       ],
     },
   ],

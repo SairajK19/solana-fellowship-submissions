@@ -1,3 +1,4 @@
+use crate::error::BallotErrors;
 use crate::instructions::BallotInstructions;
 use crate::state::{Ballot, Proposal, Voter};
 use borsh::de::BorshDeserialize;
@@ -42,16 +43,27 @@ impl Processor {
         msg!("Started init process...");
         let account_info_iter = &mut accounts.iter();
 
+        let chairperson = next_account_info(account_info_iter)?; // signer
         let ballot_account = next_account_info(account_info_iter)?; // ballot account
+
+        let ballot_account_data = Ballot::try_from_slice(&ballot_account.data.borrow())?;
+
+        // if account already initialized then we dont need to initialized.
+        if ballot_account_data.initialized != 0 as u8 {
+            return Err(BallotErrors::AlreadyInitialized.into());
+        }
 
         let ballot = Ballot {
             total_proposals: 0,
             winner_address: Pubkey::default(),
+            chairperson: *chairperson.key,
+            initialized: 1,
         };
 
         let writer = &mut &mut ballot_account.data.borrow_mut()[..];
         ballot.serialize(writer)?;
 
+        msg!("Done Initialized!");
         Ok(())
     }
 
@@ -60,8 +72,18 @@ impl Processor {
         msg!("Pubkey default is {}", Pubkey::default());
         let account_info_iter = &mut accounts.iter();
 
-        let _chairperson_account = next_account_info(account_info_iter)?; // signer
+        let chairperson_account = next_account_info(account_info_iter)?; // signer
         let proposal_account = next_account_info(account_info_iter)?; // proposal_acc
+        let ballot_account = next_account_info(account_info_iter)?; // ballot account
+
+        let mut ballot_account_data = Ballot::try_from_slice(&ballot_account.data.borrow())?;
+
+        if ballot_account_data.chairperson != *chairperson_account.key
+            && !chairperson_account.is_signer
+        {
+            msg!("You cannot make changes to the program...");
+            return Err(BallotErrors::YouAreNotTheChairperson.into());
+        }
 
         let proposal_data = Proposal::try_from_slice(&input)?;
 
@@ -69,10 +91,6 @@ impl Processor {
         proposal_data.serialize(writer)?;
 
         // updating ballot account
-        let ballot_account = next_account_info(account_info_iter)?; // ballot account
-
-        let mut ballot_account_data = Ballot::try_from_slice(&ballot_account.data.borrow())?;
-
         ballot_account_data.total_proposals += 1 as u32;
 
         let writer = &mut &mut ballot_account.data.borrow_mut()[..];
@@ -89,6 +107,10 @@ impl Processor {
         let proposal_account = next_account_info(account_info_iter)?; // candidate account
 
         let mut vote_account_data = Voter::try_from_slice(&input)?;
+
+        if vote_account_data.voted == 1 {
+            return Err(BallotErrors::AlreadyVoted.into());
+        }
 
         let mut proposal_data = Proposal::try_from_slice(&proposal_account.data.borrow())?;
 

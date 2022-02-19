@@ -38,6 +38,8 @@ const initBallot = async () => {
   const ballot_data = new BallotAccount({
     total_proposals: 0,
     winner_address: getEmptyAddressBuffer(),
+    chairperson: getEmptyAddressBuffer(),
+    initialized: 0,
   });
   const BALLOT_ACCOUNT_SIZE = serialize(SCHEMA, ballot_data).length;
   const buffers = [Buffer.from(Int8Array.from([3]))];
@@ -63,14 +65,23 @@ const initBallot = async () => {
   });
 
   const initBallotTx = new TransactionInstruction({
-    keys: [{ pubkey: ballotAccount, isSigner: false, isWritable: true }],
+    keys: [
+      { pubkey: userKeypair.publicKey, isSigner: true, isWritable: false },
+      { pubkey: ballotAccount, isSigner: false, isWritable: true },
+    ],
     programId: ballotProgramId,
     data: data,
   });
 
-  const tx = new Transaction().add(createBallotAccountTx, initBallotTx);
-
-  await connection.sendTransaction(tx, [userKeypair]);
+  try {
+    const tx = new Transaction().add(createBallotAccountTx, initBallotTx);
+    await connection.sendTransaction(tx, [userKeypair]);
+  } catch (err) {
+    console.log(err.logs);
+    console.error("Make sure you have deployed the program.");
+    console.error("OR");
+    console.error("You have already created the ballot!");
+  }
 };
 
 /**
@@ -123,12 +134,17 @@ const generateProposal = async (name: string) => {
     data
   );
 
-  const tx = new Transaction().add(createProposaAccountTx, proposalTx);
+  try {
+    const tx = new Transaction().add(createProposaAccountTx, proposalTx);
 
-  await connection.sendTransaction(tx, [userKeypair, candidateKeypair], {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
+    await connection.sendTransaction(tx, [userKeypair, candidateKeypair], {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
+  } catch (err) {
+    console.log(err.logs);
+    console.error("You have already created the proposals!");
+  }
 };
 
 /**
@@ -171,11 +187,15 @@ const vote = async (name: string) => {
   // voters state.
   const voteInstructionTx = await getCreateVoteTx(vote_account, name, data);
 
-  const tx = new Transaction().add(createVoteAccountTx, voteInstructionTx);
+  try {
+    const tx = new Transaction().add(createVoteAccountTx, voteInstructionTx);
 
-  await connection.sendTransaction(tx, [userKeypair], {
-    preflightCommitment: "confirmed",
-  });
+    await connection.sendTransaction(tx, [userKeypair], {
+      preflightCommitment: "confirmed",
+    });
+  } catch (err) {
+    console.log(err.logs);
+  }
 };
 
 const generateCandidates = async () => {
@@ -316,6 +336,13 @@ const declareWinner = async () => {
 };
 
 const main = async () => {
+  // const ballotAccount = await PublicKey.createWithSeed(
+  //   userKeypair.publicKey,
+  //   "ballot",
+  //   ballotProgramId
+  // );
+  // const ballotAccountData = await connection.getAccountInfo(ballotAccount);
+  // console.log(deserialize(SCHEMA, BallotAccount, ballotAccountData.data));
   initBallot(); // create ballot account
   await delay(5000);
   generateCandidates(); // creates 3 proposals

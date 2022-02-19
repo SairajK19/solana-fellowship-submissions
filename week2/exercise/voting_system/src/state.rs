@@ -1,5 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{account_info::AccountInfo, pubkey::Pubkey};
+use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct Voter {
@@ -18,5 +18,7 @@ pub struct Proposal {
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct Ballot {
     pub total_proposals: u32,
-    pub winner_address: Pubkey
+    pub winner_address: Pubkey,
+    pub chairperson: Pubkey,
+    pub initialized: u8,
 }
