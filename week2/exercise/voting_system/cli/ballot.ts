@@ -26,6 +26,8 @@ import {
   getCreateProposalTx,
   getCreateVoterAccountTx,
   getCreateVoteTx,
+  getGiveRightToVotingTx,
+  getSubscribeForVotingTx,
 } from "./transactions";
 
 const ballotProgramId = getProgramId();
@@ -147,12 +149,8 @@ const generateProposal = async (name: string) => {
   }
 };
 
-/**
- * Creates a vote account and votes a particular candidate.
- * @param name vote -> to
- */
-const vote = async (name: string) => {
-  console.log("Voting");
+const subscribeForVoting = async () => {
+  console.log("Creating vote account and initializing...");
   const vote_data = new VoteAccount({
     weight: 1,
     delegate: getEmptyAddressBuffer(),
@@ -162,11 +160,10 @@ const vote = async (name: string) => {
   const input = serialize(SCHEMA, vote_data);
   const VOTE_ACCOUNT_SIZE = input.length;
   const buffers = [
-    Buffer.from(Uint8Array.from([1])),
+    Buffer.from(Uint8Array.from([4])),
     new Numberu32(VOTE_ACCOUNT_SIZE).toBuffer(),
     Buffer.from(input),
   ];
-  const data = Buffer.concat(buffers);
 
   // creates an account for storing voters data.
   const vote_account = await PublicKey.createWithSeed(
@@ -183,12 +180,76 @@ const vote = async (name: string) => {
     connection
   );
 
+  const subscribeForVotingTx = await getSubscribeForVotingTx(
+    vote_account,
+    Buffer.concat(buffers)
+  );
+
+  try {
+    const tx = new Transaction().add(createVoteAccountTx, subscribeForVotingTx);
+
+    await connection.sendTransaction(tx, [userKeypair], {
+      preflightCommitment: "confirmed",
+    });
+  } catch (err) {
+    console.error("You have already created the account!");
+  }
+};
+
+const giveRightToVote = async () => {
+  console.log("Giving right to vote.");
+
+  const buffers = [Buffer.from(Uint8Array.from([5]))];
+  const data = Buffer.concat(buffers);
+
+  const vote_account = await PublicKey.createWithSeed(
+    userKeypair.publicKey,
+    "voter",
+    ballotProgramId
+  );
+
+  const ballot_account = await PublicKey.createWithSeed(
+    userKeypair.publicKey,
+    "ballot",
+    ballotProgramId
+  );
+
+  const giveRightToVoteTx = await getGiveRightToVotingTx(
+    vote_account,
+    ballot_account,
+    userKeypair,
+    data
+  );
+
+  const tx = new Transaction().add(giveRightToVoteTx);
+
+  await connection.sendTransaction(tx, [userKeypair], {
+    preflightCommitment: "confirmed",
+  });
+};
+
+/**
+ * Creates a vote account and votes a particular candidate.
+ * @param name vote -> to
+ */
+const vote = async (name: string) => {
+  console.log("Voting");
+  const buffers = [Buffer.from(Uint8Array.from([1]))];
+  const data = Buffer.concat(buffers);
+
+  // creates an account for storing voters data.
+  const vote_account = await PublicKey.createWithSeed(
+    userKeypair.publicKey,
+    "voter",
+    ballotProgramId
+  );
+
   // transaction for calling instruction on program to store
   // voters state.
   const voteInstructionTx = await getCreateVoteTx(vote_account, name, data);
 
   try {
-    const tx = new Transaction().add(createVoteAccountTx, voteInstructionTx);
+    const tx = new Transaction().add(voteInstructionTx);
 
     await connection.sendTransaction(tx, [userKeypair], {
       preflightCommitment: "confirmed",
@@ -336,23 +397,21 @@ const declareWinner = async () => {
 };
 
 const main = async () => {
-  // const ballotAccount = await PublicKey.createWithSeed(
-  //   userKeypair.publicKey,
-  //   "ballot",
-  //   ballotProgramId
-  // );
-  // const ballotAccountData = await connection.getAccountInfo(ballotAccount);
-  // console.log(deserialize(SCHEMA, BallotAccount, ballotAccountData.data));
   initBallot(); // create ballot account
+  await delay(5000);
+  subscribeForVoting(); // creates vote account
+  await delay(5000);
+  getVoterInfo(); // gets the voters info
   await delay(5000);
   generateCandidates(); // creates 3 proposals
   await delay(5000);
   getCandidateInfos(); // gets the proposal account data
   await delay(5000);
+  giveRightToVote(); // give right to vote
+  await delay(5000);
   vote(candidates[1]); // votes a random candidate
   await delay(5000);
-  getVoterInfo(); // gets the voters info
-  await delay(5000);
+  getCandidateInfos(); // gets the proposal account data
   getWinner(); // gets the winner
   await delay(5000);
   declareWinner(); // gets ballot account data

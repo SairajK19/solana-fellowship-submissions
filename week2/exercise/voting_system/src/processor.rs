@@ -23,9 +23,9 @@ impl Processor {
                 msg!("Init instruction for program {:?}", program_id);
                 Processor::create_proposal(accounts, &input)?;
             }
-            BallotInstructions::Vote { input } => {
+            BallotInstructions::Vote => {
                 msg!("Executing Vote instruction");
-                Processor::vote(accounts, &input)?;
+                Processor::vote(accounts)?;
             }
             BallotInstructions::Winner => {
                 msg!("Declaring winner!!!");
@@ -34,6 +34,18 @@ impl Processor {
             BallotInstructions::InitBallot => {
                 msg!("Initializing ballot");
                 Processor::init_ballot(accounts)?;
+            }
+            BallotInstructions::SubscribeForVoting { input } => {
+                msg!("Subscribing...");
+                Processor::subscribe_for_voting(accounts, &input, program_id)?;
+            }
+            BallotInstructions::GiveRightToVote => {
+                msg!("Giving right to vote...");
+                Processor::give_right_to_vote(accounts, program_id)?;
+            }
+            BallotInstructions::DelegateVote => {
+                msg!("Delegating vote...");
+                Processor::delegate_vote(accounts, program_id)?;
             }
         }
         Ok(())
@@ -99,23 +111,29 @@ impl Processor {
         Ok(())
     }
 
-    fn vote(accounts: &[AccountInfo], input: &[u8]) -> ProgramResult {
+    fn vote(accounts: &[AccountInfo]) -> ProgramResult {
         msg!("Voting...");
         let account_info_iter = &mut accounts.iter();
 
         let vote_account = next_account_info(account_info_iter)?; // voter account
         let proposal_account = next_account_info(account_info_iter)?; // candidate account
 
-        let mut vote_account_data = Voter::try_from_slice(&input)?;
+        let mut vote_account_data = Voter::try_from_slice(&vote_account.data.borrow())?;
 
         if vote_account_data.voted == 1 {
             return Err(BallotErrors::AlreadyVoted.into());
         }
 
+        if vote_account_data.weight == 0 {
+            return  Err(BallotErrors::NoVotesLeft.into());
+        }
+
         let mut proposal_data = Proposal::try_from_slice(&proposal_account.data.borrow())?;
 
+        msg!("Incrementing voting.. {}", vote_account_data.weight);
         // increase vote for that particular candidate.
         proposal_data.total_votes += vote_account_data.weight as u32;
+        msg!("Incremented");
 
         // Set voted as true
         // assign candidates pub key to -> voted
@@ -130,6 +148,137 @@ impl Processor {
         let writer = &mut &mut vote_account.data.borrow_mut()[..];
         vote_account_data.serialize(writer)?;
 
+        Ok(())
+    }
+
+    // this fn initializes a voter account, so that the voter can vote.
+    fn subscribe_for_voting(
+        accounts: &[AccountInfo],
+        input: &[u8],
+        program_id: &Pubkey,
+    ) -> ProgramResult {
+        let account_info_iter = &mut accounts.iter();
+
+        let voter_account = next_account_info(account_info_iter)?; // voter account
+
+        // check if the account is owned by the program.
+        if voter_account.owner != program_id {
+            msg!("Account not owned by this program");
+            return Err(ProgramError::IllegalOwner);
+        }
+
+        let mut voter_data = Voter::try_from_slice(&input)?;
+
+        // check if the voter has already voted.
+        if voter_data.voted == 1 as u8 {
+            msg!("You have already voted..");
+            return Err(BallotErrors::AlreadyVoted.into());
+        }
+
+        // initialize the voter
+        voter_data.voted = 0 as u8;
+        voter_data.weight = 0 as u8;
+        msg!("Have set weight to {}", voter_data.weight);
+        voter_data.vote = Pubkey::default();
+        voter_data.delegate = Pubkey::default();
+
+        let writer = &mut &mut voter_account.data.borrow_mut()[..];
+        voter_data.serialize(writer)?;
+        Ok(())
+    }
+
+    fn give_right_to_vote(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
+        let account_info_iter = &mut accounts.iter();
+
+        let chairperson_account = next_account_info(account_info_iter)?;
+        let ballot_account = next_account_info(account_info_iter)?;
+
+        // ballot account should be owned by the program
+        if ballot_account.owner != program_id {
+            msg!("Incorrect account, not owned by this program");
+            return Err(ProgramError::IllegalOwner);
+        }
+
+        let ballot_data = Ballot::try_from_slice(&ballot_account.data.borrow())?;
+
+        // only chairperson should be able to give right to vote.
+        if *chairperson_account.key != ballot_data.chairperson {
+            msg!("Incorrect chairperson");
+            return Err(BallotErrors::YouAreNotTheChairperson.into());
+        }
+
+        // get the voters account
+        let voter_account = next_account_info(account_info_iter)?; // vote account
+
+        let mut voter_data = Voter::try_from_slice(&voter_account.data.borrow())?;
+
+        // check if the voter has already voted.
+        if voter_data.voted == 1 {
+            msg!("You have already voted..");
+            return Err(BallotErrors::AlreadyVoted.into());
+        }
+
+        // check if the voter has already been granted the right to vote.
+        if voter_data.weight >= 1 {
+            msg!("You have already been given the right to vote..");
+            return Err(BallotErrors::AlreadyHaveRightToVote.into());
+        }
+
+        // increase weight by 1
+        voter_data.weight = 1 as u8;
+
+        let writer = &mut &mut voter_account.data.borrow_mut()[..];
+        voter_data.serialize(writer)?;
+
+        Ok(())
+    }
+
+    fn delegate_vote(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
+        let account_info_iter = &mut accounts.into_iter();
+
+        let voter_account = next_account_info(account_info_iter)?; // voter
+        let delegate_to_account = next_account_info(account_info_iter)?; // delegate to
+
+        if voter_account.owner != program_id && delegate_to_account.owner != program_id {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        // get voter and delegate_to account data
+        let mut voter_data = Voter::try_from_slice(&voter_account.data.borrow())?;
+        let mut delegate_to_data = Voter::try_from_slice(&delegate_to_account.data.borrow())?;
+
+        // check if voter has already voted.
+        if voter_data.voted == 1 {
+            msg!("Voter has already voted.");
+            return Err(BallotErrors::AlreadyVoted.into());
+        }
+
+        voter_data.weight = 0; // weight is 0 since voted.
+        voter_data.delegate = *delegate_to_account.key; // delegates pub key
+        voter_data.voted = 1; // set voted to true`
+
+        // check if delegate has already voted
+        // if yes then
+        if delegate_to_data.voted == 1 {
+            let candidate_account = next_account_info(account_info_iter)?; // candidate
+
+            let mut candidate_data = Proposal::try_from_slice(&candidate_account.data.borrow())?;
+
+            // increase candidate total votes count.
+            candidate_data.total_votes += 1;
+            voter_data.vote = *candidate_account.key; // set voters vote to candidate pubkey
+
+            let writer = &mut &mut candidate_account.data.borrow_mut()[..];
+            candidate_data.serialize(writer)?;
+        } else {
+            delegate_to_data.weight += 1; // else just increase weight
+        }
+
+        let writer = &mut &mut voter_account.data.borrow_mut()[..];
+        voter_data.serialize(writer)?;
+
+        let writer = &mut &mut delegate_to_account.data.borrow_mut()[..];
+        delegate_to_data.serialize(writer)?;
         Ok(())
     }
 

@@ -71,6 +71,34 @@ export const getCreateVoteTx = async (
   });
 };
 
+export const getSubscribeForVotingTx = async (
+  vote_account: PublicKey,
+  data
+) => {
+  return new TransactionInstruction({
+    programId: BALLOT_PROGRAM_ID,
+    keys: [{ pubkey: vote_account, isSigner: false, isWritable: true }],
+    data: data,
+  });
+};
+
+export const getGiveRightToVotingTx = async (
+  vote_account: PublicKey,
+  ballot_account: PublicKey,
+  userKeypair: Keypair,
+  data: Buffer
+) => {
+  return new TransactionInstruction({
+    programId: BALLOT_PROGRAM_ID,
+    keys: [
+      { pubkey: userKeypair.publicKey, isSigner: true, isWritable: false },
+      { pubkey: ballot_account, isSigner: false, isWritable: true },
+      { pubkey: vote_account, isSigner: false, isWritable: true },
+    ],
+    data: data,
+  });
+};
+
 /**
  * Transaction for creating the proposal account
  * @param PROPOSAL_ACC_SIZE size that the state account will have

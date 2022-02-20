@@ -12,6 +12,10 @@ pub enum BallotErrors {
     AlreadyVoted,
     #[error("Hey! you are not the chairperson, you cannot make changes...")]
     YouAreNotTheChairperson,
+    #[error("You already have the right to vote")]
+    AlreadyHaveRightToVote,
+    #[error("You dont have votes left")]
+    NoVotesLeft
 }
 
 impl From<BallotErrors> for ProgramError {
