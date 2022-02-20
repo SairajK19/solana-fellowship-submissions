@@ -44,7 +44,7 @@ const initBallot = async () => {
     initialized: 0,
   });
   const BALLOT_ACCOUNT_SIZE = serialize(SCHEMA, ballot_data).length;
-  const buffers = [Buffer.from(Int8Array.from([3]))];
+  const buffers = [Buffer.from(Int8Array.from([3]))]; // 3 => instruction number for initialzing the ballot
   const data = Buffer.concat(buffers);
 
   const ballotAccount = await PublicKey.createWithSeed(
@@ -66,10 +66,11 @@ const initBallot = async () => {
     space: BALLOT_ACCOUNT_SIZE,
   });
 
+  // init ballot transaction
   const initBallotTx = new TransactionInstruction({
     keys: [
-      { pubkey: userKeypair.publicKey, isSigner: true, isWritable: false },
-      { pubkey: ballotAccount, isSigner: false, isWritable: true },
+      { pubkey: userKeypair.publicKey, isSigner: true, isWritable: false }, // chairperson
+      { pubkey: ballotAccount, isSigner: false, isWritable: true }, // ballot state account
     ],
     programId: ballotProgramId,
     data: data,
