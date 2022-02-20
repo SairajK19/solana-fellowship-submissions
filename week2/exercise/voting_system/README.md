@@ -9,4 +9,3 @@ node index.js
 ![This is an image](./images/ballot.png)
 
 Note: Not much error handling done in the client script. script will run only once per deployment.
-Feature for delegating vote yet to be added
