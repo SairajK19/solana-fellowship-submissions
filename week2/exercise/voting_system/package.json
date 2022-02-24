@@ -1,8 +1,10 @@
 {
   "dependencies": {
+    "@solana/wallet-adapter-phantom": "^0.9.3",
     "@solana/web3.js": "^1.34.0",
     "@testdeck/mocha": "^0.2.0",
     "@types/bs58": "^4.0.1",
+    "base58": "^2.0.1",
     "borsh": "^0.7.0",
     "buffer": "^6.0.3",
     "buffer-layout": "^1.2.2",
