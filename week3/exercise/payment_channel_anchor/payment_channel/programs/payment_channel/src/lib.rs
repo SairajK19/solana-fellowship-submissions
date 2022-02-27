@@ -125,9 +125,9 @@ pub mod payment_channel {
     // bi-directional payment channel
     pub fn create_payment_channel(
         ctx: Context<CreatePaymentChannel>,
+        payment_channel_bump: u8,
         balances: Vec<u64>,
         users: Vec<Pubkey>,
-        payment_channel_bump: u8,
         expires_at: u32,
     ) -> ProgramResult {
         let payment_channel_pda = &mut ctx.accounts.payment_channel_pda;
@@ -162,6 +162,8 @@ pub mod payment_channel {
             amount,
         );
 
+        msg!("{:?}", ix);
+
         anchor_lang::solana_program::program::invoke_signed(
             &ix,
             &[
@@ -169,7 +171,10 @@ pub mod payment_channel {
                 ctx.accounts.user.to_account_info(),
                 ctx.accounts.system_program.to_account_info(),
             ],
-            &[&[b"payment_channel", &[payment_channel_pda.bump]]],
+            &[&[
+                b"payment_channel",
+                &[payment_channel_pda.bump],
+            ]],
         )?;
 
         Ok(())
@@ -230,13 +235,14 @@ pub struct CreatePaymentChannel<'info> {
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
-    #[account(signer)]
-    pub user: AccountInfo<'info>,
+    #[account(mut)]
+    pub user: Signer<'info>,
 
     pub multisig: Account<'info, Multisig>,
 
     pub multisig_signer: AccountInfo<'info>,
 
+    #[account(mut)]
     pub payment_channel_pda: Account<'info, PaymentChannel>,
 
     pub system_program: Program<'info, System>,
@@ -334,12 +340,14 @@ Alice -> 20
 Bob -> 20
 
 Alice and Bob creates a channel
-Alice send 20TokenX to Bob
+Alice send 20TokenX to Somewhere
 Bob send 10TokenY to Alice
 
 Alice and Bob creates a channel
-Alice sends 20TokenX to Bob
+Alice sends 20TokenX to Somewhere
 Bob dosent send anything
 Alice withdraws
+
+Vise Versa
 
 */

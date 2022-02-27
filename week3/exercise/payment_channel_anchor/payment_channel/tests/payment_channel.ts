@@ -216,7 +216,7 @@ describe("payment_channel", async () => {
 
     const users = [owner1.publicKey, owner2.publicKey];
 
-    await program.rpc.createPaymentChannel(balances, users, pnonce, 1000000, {
+    await program.rpc.createPaymentChannel(pnonce, balances, users, 1000000, {
       accounts: {
         multisig: multisig.publicKey,
         paymentChannelPda: payment_channel_pda,
@@ -225,7 +225,27 @@ describe("payment_channel", async () => {
       },
       signers: [myWallet],
     });
-
-    console.log(await program.account.paymentChannel.fetch(payment_channel_pda));
   });
+
+  // it("Withdraws tokens from owner1", async () => {
+  //   await transferSOL(
+  //     payment_channel_pda,
+  //     myWallet.publicKey,
+  //     myWallet,
+  //     100000000000
+  //   );
+
+  //   console.log(await anchor.getProvider().connection.getBalance(payment_channel_pda))
+
+  //   await program.rpc.withdraw({
+  //     accounts: {
+  //       multisig: multisig.publicKey,
+  //       multisigSigner: multisigSigner,
+  //       paymentChannelPda: payment_channel_pda,
+  //       systemProgram: SystemProgram.programId,
+  //       user: owner1.publicKey,
+  //     },
+  //     signers: [owner1],
+  //   });
+  // });
 });
