@@ -1,0 +1,14 @@
+nav {
+    height: 65px;
+    position: sticky;
+    top: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0px 20px;
+    background-color: black;
+}
+
+nav h2 {
+    color: white;
+}
