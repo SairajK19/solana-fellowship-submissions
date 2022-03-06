@@ -107,8 +107,6 @@ describe("nft-marketplace", async () => {
       maxSupply: 0,
     });
 
-    console.log(mintNFTResponse.mint.toString());
-
     _mintAddress = mintNFTResponse.mint;
     _edition = mintNFTResponse.edition;
     _metadata = mintNFTResponse.metadata;
