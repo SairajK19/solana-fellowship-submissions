@@ -1,18 +1,25 @@
-import "./App.css";
-
-// components
-import Wallet from "./Wallet/Wallet";
-import Navbar from "./Navbar/Navbar";
-import Store from "./Store/Store";
+import React from 'react';
+import logo from './logo.svg';
+import './App.css';
 
 function App() {
   return (
-    <Wallet>
-      <div className="App">
-        <Navbar />
-        <Store />
-      </div>
-    </Wallet>
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.tsx</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
   );
 }
 
