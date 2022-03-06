@@ -4,5 +4,5 @@ Have written tests for minting NFTs along with changing metadata of the NFTs to 
 OR run
 
 ```console
-anchor test # to run tests
+$ anchor test # to run tests
 ```
