@@ -1,0 +1,15 @@
+<-- Title := Create a way for people to stake the currency you created and earn a yield of say 10% APY -->
+
+Currency -> FELL
+People := Alice & Bob
+Inital Mint -> 1000 FELL
+Alice -> 500 FELL
+Bob -> 500 FELL
+
+## Staking
+Bob stakes 100 FELL, after __ time he receives 100 + (10 % 100) FELL
+
+## Accounts
+Mint Account -> FELL Account
+Associated Token Account For User
+Stake Account -> To hold stake amount, Probably a PDA (per user)
