@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "programs/*"
+]
+
+# Written by SairajK19 -> https://github.com/SairajK19

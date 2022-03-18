@@ -1,0 +1,9 @@
+Multisig/Shared Wallet
+
+# Normal Accounts
+owner1 owner2 owner3
+
+# State Accounts
+multisig -> Keypair
+multisigSigner -> To hold value
+transaction -> Keypair / PDA
