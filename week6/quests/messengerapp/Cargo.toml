@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "programs/*"
+]
+
+# SairajK19 -> https://github.com/SairajK19
