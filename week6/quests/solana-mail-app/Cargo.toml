@@ -1,0 +1,20 @@
+[package]
+name = "bpf-program-template"
+version = "0.1.0"
+edition = "2021"
+license = "WTFPL"
+publish = false
+
+[dependencies]
+solana-program = "1.10.2"
+borsh = "0.9.1"
+borsh-derive = "0.9.1"
+thiserror = "1.0.24"
+
+[features]
+test-bpf = []
+
+[dev-dependencies]
+
+[lib]
+crate-type = ["cdylib", "lib"]
